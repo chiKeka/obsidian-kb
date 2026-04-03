@@ -1,233 +1,105 @@
 # obsidian-kb
 
-A Claude Code skill that analyzes any project's structure and builds a custom knowledge base: **tiered context packs for LLM consumption** + an **Obsidian wiki for human browsing**.
+A Claude Code skill that scans any project and builds a custom knowledge base: **tiered context packs for LLM consumption** + an **Obsidian wiki for human browsing**.
 
-Inspired by [Karpathy's LLM Knowledge Base workflow](https://x.com/karpathy/status/2039805659525644595), adapted for LLM-first consumption.
-
-## What It Does
-
-You point it at a project. It scans the structure, identifies data sources, maps relationships, and generates:
-
-1. **A three-tier compiled context pack system** - markdown files optimized for LLM token efficiency
-2. **A Python compiler** - tailored to your project's specific data formats and schema
-3. **An Obsidian wiki** - interlinked pages with graph view, frontmatter, and color-coded sections
-4. **Slash commands** - `/kb` for querying and `/lint-kb` for health checks
-
-The key insight: **the LLM is both the producer and consumer.** Context packs are the primary output. The Obsidian wiki is a human-readable export you get for free.
-
-## The Three-Tier System
-
-```
-Tier 0 - Index (~1000-1500 tokens)
-  Always loaded. Full inventory of everything in the knowledge base.
-  "What exists here?"
-
-Tier 1 - Group Context (~3000-6000 tokens each)
-  Loaded per operation. One file per domain/category/module.
-  "Everything about this area."
-
-Tier 2 - Entity Deep Context (~1000-2000 tokens each)
-  Loaded on demand. One file per entity with all connections.
-  "Everything about this specific thing."
-```
-
-This means an LLM can load your entire knowledge base index in ~1200 tokens, drill into a domain in ~4000 tokens, and get full entity context in ~1500 tokens. No wasted context window.
+Inspired by [Karpathy's LLM Knowledge Base workflow](https://x.com/karpathy/status/2039805659525644595).
 
 ## Install
 
-### Option A: Per-Project (works everywhere, including Claude Co Work)
-
-Copy the skill into any project:
+One command. Run this inside any project:
 
 ```bash
-# From this repo
-git clone https://github.com/chiKeka/obsidian-kb.git /tmp/obsidian-kb
-bash /tmp/obsidian-kb/install.sh
+curl -sL https://raw.githubusercontent.com/chiKeka/obsidian-kb/main/install.sh | bash
 ```
 
-Or manually:
+That's it. Now open Claude Code and run `/obsidian-kb init`.
+
+To install globally (available in all local projects, CLI and VS Code only):
 
 ```bash
-mkdir -p .claude/skills/obsidian-kb
-curl -sL https://raw.githubusercontent.com/keka/obsidian-kb/main/skills/obsidian-kb/SKILL.md \
-  -o .claude/skills/obsidian-kb/SKILL.md
+curl -sL https://raw.githubusercontent.com/chiKeka/obsidian-kb/main/install.sh | bash -s -- --global
 ```
 
-### Option B: Global (Claude Code CLI and VS Code)
+## What It Does
 
-Install once, available in all local projects:
+You run `/obsidian-kb init`. It scans your project, figures out what data you have, and proposes a knowledge base architecture. You approve it, run `/obsidian-kb build`, and it generates:
 
-```bash
-mkdir -p ~/.claude/skills/obsidian-kb
-curl -sL https://raw.githubusercontent.com/keka/obsidian-kb/main/skills/obsidian-kb/SKILL.md \
-  -o ~/.claude/skills/obsidian-kb/SKILL.md
+- **A three-tier context pack system** - markdown files optimized for LLM token efficiency
+- **A Python compiler** - tailored to your project's specific data schema
+- **An Obsidian wiki** - interlinked pages with graph view and color-coded sections
+- **`/kb` command** - query, search, and compile your knowledge base
+- **`/lint-kb` command** - health checks and structural integrity scoring
+
+## The Three Tiers
+
+```
+Tier 0 - Index (~1200 tokens)
+  Always loaded. Full inventory of everything in the KB.
+  Purpose: routing - "what exists here?"
+
+Tier 1 - Group Context (~4000 tokens each)
+  One file per domain/category/module.
+  Purpose: working context for a specific area.
+
+Tier 2 - Entity Deep Context (~1500 tokens each)
+  One file per entity with all its connections.
+  Purpose: deep work on a specific thing.
 ```
 
-### Option C: Claude Code Plugin
-
-Add this repo as a plugin dependency in your project (coming soon with Claude Code plugin marketplace).
+An LLM can load your entire KB index in ~1200 tokens, drill into a domain in ~4000, and get full entity context in ~1500. No wasted context window.
 
 ## Usage
 
-Once installed, use in any Claude Code session:
-
 ```
-/obsidian-kb init       # Scan project, classify data, propose architecture
-/obsidian-kb build      # Generate compiler, commands, run initial compile
+/obsidian-kb init       # Scan project, propose architecture
+/obsidian-kb build      # Generate everything, run initial compile
 /obsidian-kb rebuild    # Re-analyze when project structure changes
 ```
 
-### Phase 1: init
-
-The skill scans your project and detects:
-
-- **Data files** by format (JSONL, JSON, YAML, CSV, TOML, Markdown with frontmatter)
-- **Project type** (software, research, data-centric, consulting, documentation)
-- **Knowledge atoms** - what each record represents, its key fields, relationships, groupings
-- **Cross-references** between atom types
-
-It proposes an architecture and waits for your approval before generating anything.
-
-### Phase 2: build
-
-After you approve the architecture, it generates:
-
-| File | Purpose |
-|------|---------|
-| `scripts/compile-kb.py` | Python compiler tailored to your project's schema |
-| `data/compiled/index.md` | Tier 0: full inventory |
-| `data/compiled/[group]/*.md` | Tier 1: group context packs |
-| `data/compiled/[type]/*.md` | Tier 2: entity deep context |
-| `wiki/` | Obsidian vault with interlinked pages |
-| `wiki/.obsidian/` | Vault config with graph coloring |
-| `.claude/commands/kb.md` | `/kb` query command |
-| `.claude/commands/lint-kb.md` | `/lint-kb` health check |
-| `data/kb-architecture.yaml` | Architecture spec (editable) |
-| `data/compiled/freshness.json` | Compilation timestamp for staleness detection |
-
-### Phase 3: Use
-
-After build, you get two new slash commands in your project:
+After build, you also get:
 
 ```
-/kb                     # Show stats and health
+/kb                     # Stats and health
 /kb compile             # Re-run the compiler
-/kb search [query]      # Search across all compiled pages
-/kb [type] [name]       # Load Tier 2 context for a specific entity
-/kb gaps                # Find orphaned atoms and missing relationships
+/kb search [query]      # Search across compiled pages
+/kb gaps                # Find orphans and missing relationships
 
-/lint-kb                # Full health check with scoring
-/lint-kb --fix          # Auto-fix mechanical issues (backlinks, staleness)
-/lint-kb --suggest      # LLM-generated suggestions for missing connections
+/lint-kb                # Health check with scoring
+/lint-kb --fix          # Auto-fix mechanical issues
 ```
 
-## What Projects It Works With
+## Works With Any Project
 
 The skill adapts to whatever it finds:
 
-| Project Type | Knowledge Atoms | Tier 1 Grouping |
-|-------------|-----------------|-----------------|
-| JSONL/JSON data with domain fields | Entities, frameworks, concepts | By domain/category |
-| Software (package.json, Cargo.toml, etc.) | Components, APIs, modules, configs | By module/directory |
-| Research (papers/, .bib files) | Papers, findings, methods | By research topic |
-| Documentation (docs/) | Documentation pages | By section |
-| Consulting (clients/, projects/) | Deliverables, risks, briefs | By client/project |
-| Generic structured data | User-classified atoms | User-defined grouping |
+| Project Type | What It Extracts |
+|-------------|------------------|
+| Data files (JSONL, JSON, YAML, CSV) | Entities, relationships, groupings |
+| Software (any language) | Components, APIs, modules, configs, dependencies |
+| Research / academic | Papers, findings, methods |
+| Documentation | Pages, sections, cross-references |
+| Consulting / portfolio | Deliverables, risks, briefs |
 
-For software projects without structured data files, it extracts knowledge atoms from the code structure itself - components, API endpoints, architecture decisions, configuration, dependencies.
+For software projects without structured data, it extracts knowledge atoms from the code structure itself.
 
-## How It Works Under the Hood
+## How It Works
 
 The skill doesn't use templates. It instructs Claude to:
 
-1. **Analyze** your project's actual data schema by sampling records
-2. **Design** a tier structure based on what it finds
-3. **Write** a Python compiler from scratch, tailored to your schema
-4. **Generate** an Obsidian vault with proper wikilinks and graph coloring
-5. **Create** slash commands that know your project's atom types
+1. **Scan** your project and sample actual data records
+2. **Classify** what each record represents (knowledge atom types)
+3. **Map** relationships between atom types
+4. **Design** a tier structure based on what it finds
+5. **Write** a Python compiler from scratch for your schema
+6. **Generate** an Obsidian vault with wikilinks and graph coloring
 
-The compiler it generates is:
-- Self-contained Python (stdlib only, unless your data uses YAML)
-- Idempotent (full regeneration each run, never appends)
-- Fast (< 5 seconds for typical projects)
-- Runnable via `python3 scripts/compile-kb.py` (context packs) or `python3 scripts/compile-kb.py --human` (also wiki)
+The architecture spec (`data/kb-architecture.yaml`) is saved as a contract between analysis and generation. You can edit it before building.
 
-The architecture spec (`data/kb-architecture.yaml`) is the contract between analysis and generation. You can edit it before building. It documents what the knowledge base tracks.
-
-## Design Principles
-
-1. **LLM-first.** Context packs are optimized for token-efficient LLM consumption. The Obsidian wiki is a bonus human export.
-
-2. **Architecture spec is the contract.** `kb-architecture.yaml` bridges analysis and generation. Editable. Inspectable.
-
-3. **Freshness over rebuilding.** The compiler tracks source timestamps. Slash commands check `freshness.json`. Recompile only when sources change.
-
-4. **The compiler is project-specific code.** Not a template instantiation. Written fresh each time for your project's actual schema and relationships.
-
-5. **Obsidian conventions.** Wikilinks use `[[path/slug|Display Name]]`. Frontmatter uses standard YAML. Tags are lowercase. Graph coloring uses `path:` queries. Works in Obsidian without plugins.
-
-## Example: Knowledge Graph Project
-
-For a project with JSONL files containing frameworks, concepts, and a reading list:
-
-```
-=== Knowledge Base Architecture Proposal ===
-
-Project: my-research
-Type: Knowledge graph / Data-centric
-
-Sources:
-  data/frameworks.jsonl     — framework (22 records)
-  data/concepts.jsonl       — concept (35 records)
-  data/reading-list.jsonl   — reading (50 records)
-
-Tier Structure:
-  Tier 0 (Index): All 107 atoms, one-line each
-  Tier 1 (domain): 5 groups — systems, institutions, infrastructure, culture, opportunity
-  Tier 2 (framework): 22 deep context pages
-
-Wiki Structure:
-  wiki/
-    frameworks/  — 22 pages
-    concepts/    — 35 pages
-    reading/     — 50 pages
-    index.md     — Map of Content
-
-Estimated pages: 108
-```
-
-## Example: Software Project
-
-For a TypeScript project with src/, docs/, and API routes:
-
-```
-=== Knowledge Base Architecture Proposal ===
-
-Project: my-api
-Type: TypeScript software project
-
-Sources:
-  src/components/    — component (15 modules)
-  src/routes/        — endpoint (28 routes)
-  docs/adr/          — decision (8 ADRs)
-  package.json       — dependency (42 deps)
-
-Tier Structure:
-  Tier 0 (Index): All atoms inventory
-  Tier 1 (module): 6 groups — auth, billing, core, api, utils, config
-  Tier 2 (component): 15 deep context pages
-
-Wiki Structure:
-  wiki/
-    components/  — 15 pages
-    endpoints/   — 28 pages
-    decisions/   — 8 pages
-    index.md     — Map of Content
-```
+The generated compiler is self-contained Python (stdlib only), idempotent, and fast (< 5 seconds). Run it with `python3 scripts/compile-kb.py` for context packs or `python3 scripts/compile-kb.py --human` to also generate the wiki.
 
 ## Credits
 
-Inspired by [Andrej Karpathy's tweet](https://x.com/karpathy/status/2039805659525644595) about building knowledge bases for LLM consumption. The three-tier compiled context pack system was developed as an LLM-optimized adaptation of that workflow.
+Inspired by [Andrej Karpathy](https://x.com/karpathy/status/2039805659525644595). The three-tier compiled context pack system was developed as an LLM-optimized adaptation of that workflow.
 
 ## License
 
