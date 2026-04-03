@@ -1,0 +1,5 @@
+{
+  "name": "obsidian-kb",
+  "description": "Analyze any project's structure and build a custom knowledge base: tiered context packs for LLM consumption + Obsidian wiki for human browsing. Inspired by Karpathy's LLM Knowledge Base workflow.",
+  "version": "1.0.0"
+}
