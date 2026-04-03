@@ -11,7 +11,7 @@
 
 set -e
 
-REPO_URL="https://raw.githubusercontent.com/keka/obsidian-kb/main/skills/obsidian-kb/SKILL.md"
+REPO_URL="https://raw.githubusercontent.com/chiKeka/obsidian-kb/main/skills/obsidian-kb/SKILL.md"
 
 # Parse args
 GLOBAL=false

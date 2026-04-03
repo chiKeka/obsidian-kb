@@ -41,7 +41,7 @@ Copy the skill into any project:
 
 ```bash
 # From this repo
-git clone https://github.com/keka/obsidian-kb.git /tmp/obsidian-kb
+git clone https://github.com/chiKeka/obsidian-kb.git /tmp/obsidian-kb
 bash /tmp/obsidian-kb/install.sh
 ```
 
